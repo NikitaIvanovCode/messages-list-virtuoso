@@ -1,23 +1,50 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState, useRef } from 'react';
+import { Virtuoso } from 'react-virtuoso';
+import { data } from './utils';
 
 function App() {
+  const [dataState, setDataState] = useState([]);
+  const listRef = useRef();
+
+  useEffect(() => {
+    data.map((item, index) => {
+      setTimeout(() => {
+        setDataState(prev => [...prev, item]);
+      }, 300 * index);
+    });
+  }, []);
+
+  useEffect(() => {
+    listRef.current.scrollToIndex({
+      index: dataState.length - 1,
+      behavior: 'smooth',
+    });
+  }, [dataState]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <Virtuoso
+        ref={listRef}
+        style={{
+          height: '300px',
+          width: '750px',
+          border: '1px solid #cbcbcb',
+        }}
+        totalCount={dataState.length}
+        itemContent={index => (
+          <div
+            style={{
+              padding: '5px',
+              border: '1px solid #c1c1c1',
+              margin: '5px 0 5px 5px',
+              width: '80%',
+            }}
+            key={index}
+          >
+            <div>{dataState[index]}</div>
+          </div>
+        )}
+      />
     </div>
   );
 }
