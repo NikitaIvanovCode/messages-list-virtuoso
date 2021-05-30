@@ -1,50 +1,86 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Virtuoso } from 'react-virtuoso';
-import { data } from './utils';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import useAxios from 'axios-hooks';
+import { Component } from './Component';
+
+const instanse = axios.create({
+  baseURL: 'http://localhost:6969',
+});
+
+instanse.interceptors.request.use(config => {
+  config.headers = { Authorization: '0100101' };
+  return config;
+});
+
+instanse.interceptors.response.use(response => {
+  response.data.code = 200;
+  return response;
+});
 
 function App() {
-  const [dataState, setDataState] = useState([]);
-  const listRef = useRef();
+  const [text, setText] = useState('hello');
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  // const btnGetHandler = async () => {
+  //   const res = await axios.get(instanse.baseURL);
+  //   setText(res.data.message);
+  // };
+
+  const btnPostHandler = async e => {
+    e.preventDefault();
+    setIsLoading(true);
+    const config = {
+      method: 'post',
+      url: '/data',
+      data: {
+        email: e.target.email.value,
+        password: e.target.password.value,
+      },
+    };
+
+    const res = await instanse(config);
+    setIsLoading(false);
+    console.log(res.data);
+  };
+
+  const [{ data, loading, error }, execute] = useAxios(
+    {
+      url: 'http://localhost:6969',
+    },
+    { manual: true }
+  );
 
   useEffect(() => {
-    data.map((item, index) => {
-      setTimeout(() => {
-        setDataState(prev => [...prev, item]);
-      }, 300 * index);
-    });
-  }, []);
+    if (data?.message) {
+      setText(data.message);
+    }
+  }, [data]);
 
-  useEffect(() => {
-    listRef.current.scrollToIndex({
-      index: dataState.length - 1,
-      behavior: 'smooth',
-    });
-  }, [dataState]);
+  const btnGetHandler = () => {
+    execute();
+  };
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error!</p>;
 
   return (
     <div>
-      <Virtuoso
-        ref={listRef}
-        style={{
-          height: '300px',
-          width: '750px',
-          border: '1px solid #cbcbcb',
-        }}
-        totalCount={dataState.length}
-        itemContent={index => (
-          <div
-            style={{
-              padding: '5px',
-              border: '1px solid #c1c1c1',
-              margin: '5px 0 5px 5px',
-              width: '80%',
-            }}
-            key={index}
-          >
-            <div>{dataState[index]}</div>
-          </div>
-        )}
-      />
+      <button onClick={btnGetHandler}>refetch</button>
+      <div>{text}</div>
+      <hr />
+      <form onSubmit={btnPostHandler}>
+        <div>
+          <input type="text" name="email" placeholder="email" />
+        </div>
+        <div>
+          <input type="text" name="password" placeholder="password" />
+        </div>
+        <button>post</button>
+      </form>
+      {isLoading && <div>loading...</div>}
+      <div>{message}</div>
+      <Component text={text} />
     </div>
   );
 }
